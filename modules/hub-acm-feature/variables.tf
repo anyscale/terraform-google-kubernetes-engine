@@ -29,23 +29,24 @@ variable "location" {
   type        = string
 }
 
-variable "operator_path" {
-  description = "Path to the operator yaml config. If unset, will download from `var.operator_latest_manifest_url`."
-  type        = string
-  default     = null
-}
-
-variable "operator_latest_manifest_url" {
-  description = "Url to the latest downloadable manifest for the operator. To be supplied by operator module providers, not end users."
-  type        = string
-}
-
-variable "enable_multi_repo" {
-  description = "Whether to use Config Sync [multi-repo mode](https://cloud.google.com/kubernetes-engine/docs/add-on/config-sync/how-to/multi-repo)."
+variable "create_membership" {
+  description = "Create a new membership or reuse an existing one."
   type        = bool
-  default     = false
+  default     = true
 }
 
+variable "enable_fleet_feature" {
+  description = "Whether to enable the ACM feature on the fleet."
+  type        = bool
+  default     = true
+}
+
+variable "cluster_membership_id" {
+  description = "The hub membership ID to use"
+  type        = string
+}
+
+# Config Sync
 variable "sync_repo" {
   description = "ACM Git repo address"
   type        = string
@@ -54,12 +55,6 @@ variable "sync_repo" {
 variable "secret_type" {
   description = "git authentication secret type, is passed through to ConfigManagement spec.git.secretType. Overriden to value 'ssh' if `create_ssh_key` is true"
   type        = string
-}
-
-variable "secret_ref_name" {
-  description = "Name of Secret to use for authentication (Config Sync multi-repo setup only). If un-set, uses Config Management default."
-  type        = string
-  default     = ""
 }
 
 variable "sync_branch" {
@@ -80,18 +75,23 @@ variable "policy_dir" {
   default     = ""
 }
 
-variable "cluster_endpoint" {
-  description = "Kubernetes cluster endpoint."
+variable "source_format" {
+  description = "Configures a non-hierarchical repo if set to 'unstructured'. Uses [ACM defaults](https://cloud.google.com/anthos-config-management/docs/how-to/installing#configuring-config-management-operator) when unset."
   type        = string
+  default     = ""
 }
 
+# Credential creation
 variable "operator_credential_name" {
   description = "Allows calling modules to specify the name of operator credentials to match what is expected."
   type        = string
+  default     = "git-creds"
 }
+
 variable "operator_credential_namespace" {
   description = "Allows calling modules to specify the namespace for the operator credential to match what is expected."
   type        = string
+  default     = "config-management-system"
 }
 
 variable "create_ssh_key" {
@@ -106,6 +106,7 @@ variable "ssh_auth_key" {
   default     = null
 }
 
+# Policy Controller
 variable "enable_policy_controller" {
   description = "Whether to enable the ACM Policy Controller on the cluster"
   type        = bool
@@ -118,25 +119,13 @@ variable "install_template_library" {
   default     = false
 }
 
-variable "operator_cr_template_path" {
-  description = "path to template file to use for the operator"
-  type        = string
+variable "enable_log_denies" {
+  description = "Whether to enable logging of all denies and dryrun failures for ACM Policy Controller."
+  type        = bool
+  default     = false
 }
 
-variable "rootsync_cr_template_path" {
-  description = "path to template file to use for the root sync definition (Config Sync multi-repo setup only)"
-  type        = string
-}
-
-variable "source_format" {
-  description = <<EOF
-    Configures a non-hierarchical repo if set to 'unstructured'. Uses [Config Sync defaults](https://cloud.google.com/kubernetes-engine/docs/add-on/config-sync/how-to/installing#configuring-config-management-operator)
-    when unset.
-  EOF
-  type        = string
-  default     = ""
-}
-
+# Hierarchy Controller config
 variable "hierarchy_controller" {
   description = <<EOF
     Configurations for Hierarchy Controller. See [Hierarchy Controller docs](https://cloud.google.com/kubernetes-engine/docs/add-on/config-sync/how-to/installing-hierarchy-controller)
@@ -144,27 +133,4 @@ variable "hierarchy_controller" {
   EOF
   type        = map(any)
   default     = null
-}
-
-variable "enable_log_denies" {
-  description = "Whether to enable logging of all denies and dryrun failures for ACM Policy Controller."
-  type        = bool
-  default     = false
-}
-
-variable "service_account_key_file" {
-  description = "Path to service account key file to auth as for running `gcloud container clusters get-credentials`."
-  default     = ""
-}
-
-variable "use_existing_context" {
-  description = "Use existing kubecontext to auth kube-api. Useful when working with to non GKE clusters"
-  type        = bool
-  default     = false
-}
-
-variable "impersonate_service_account" {
-  type        = string
-  description = "An optional service account to impersonate for gcloud commands. If this service account is not specified, the module will use Application Default Credentials."
-  default     = ""
 }
